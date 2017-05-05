@@ -73,6 +73,10 @@ def test_embedding_lookup():
 
 
 def test_lookup_sparse():
+    '''
+    这个测试中因为params的实参是一个tuple，程序自动进行转换成一个大的tensor了，而不是构成逻辑上的tensor
+    :return:
+    '''
     a = np.arange(8).reshape(2, 4)
     b = np.arange(8, 16).reshape(2, 4)
     c = np.arange(12, 20).reshape(2, 4)
@@ -123,5 +127,100 @@ def test_lookup_sparse():
 
     '''
 
+
+def test_lookup_sparse_list():
+    a = np.arange(8).reshape(2, 4)
+    b = np.arange(8, 12).reshape(1, 4)
+    c = np.arange(12, 20).reshape(2, 4)
+
+    print(a)
+    print(b)
+    print(c)
+
+    a = tf.Variable(a, dtype=tf.float32)
+    b = tf.Variable(b, dtype=tf.float32)
+    c = tf.Variable(c, dtype=tf.float32)
+
+    idx = tf.SparseTensor(indices=[[0, 0], [0, 2], [1, 0], [1, 1]], values=[1, 2, 3, 4], dense_shape=(2, 3))
+    # 在这里dense_shape好像并没有什么用，随便用什么参数都行
+    result = tf.nn.embedding_lookup_sparse([a, c, b], idx, None, combiner="sum")
+    #api中说idx假定每行都至少有一个id，在这个测试中如果并没有发现如果没有id会出现什么错误
+
+    init = tf.global_variables_initializer()
+    sess = tf.Session()
+    sess.run(init)
+    r = sess.run(result)
+    print(r)
+
+
+def stimulate_matmul_by_lookup_sparse():
+    a = np.arange(20).reshape(5,4)
+    print(a)
+    ids = transform_list_to_sparsetensor([[[[1],[2]],[[1,2,3], [3,4]]]], [1,2,2,5])
+    '''
+    [[[0 1 0 0 0]
+  [0 0 0 0 0]]
+
+ [[0 1 1 1 0]
+  [0 0 0 1 1]]]
+    '''
+    a = tf.Variable(a)
+    t = tf.nn.embedding_lookup_sparse(a, ids, sp_weights=None, combiner="sum")
+
+    init = tf.global_variables_initializer()
+    sess = tf.Session()
+    sess.run(init)
+
+    t = sess.run(t)
+    print(t)
+
+
+def transform_list_to_sparsetensor(_data, _shape):
+    indices = [ [m,t, i, _data[m][t][i][j]] for m in xrange(len(_data) ) for t in xrange(len(_data[m])) for i in xrange(len(_data[m][t])) for j in xrange(len(_data[m][t][i]))]
+    # indices = [ [t, i, j] for t in xrange(len(_data)) for i in xrange(len(_data[t])) for j in xrange(len(_data[t][i]))]
+    print(indices)
+    values = [1]*len(indices)
+    a = tf.SparseTensor(indices=indices, values=values, dense_shape=_shape)
+    return a
+    #此处的dense_shape是必须的，且必须正确
+    # b = tf.sparse_tensor_to_dense(a)
+    #
+    # init = tf.global_variables_initializer()
+    # sess = tf.Session()
+    # sess.run(init)
+    # b = sess.run(b)
+    # print(b)
+
+
+def test_embedding_lookup_sparse_spids():
+    '''
+    通过查看源码发现这行代码 segment_ids = sp_ids.indices[:, 0]，从而验证了之前的猜想，sp_ids的参数最后都会处理成2维度的，只有
+    第0维度保持不变，其他的维度全unstack成第1维。
+    :return:
+    '''
+    a = np.arange(20).reshape(5,4)
+    print(a)
+    spIds = tf.SparseTensor(indices=[[0,0,1], [0,1,1], [1,0,1], [1,1,1]], values=[1,2,3,4], dense_shape=(2,2,2))
+    b = tf.nn.embedding_lookup_sparse(a, spIds, None, combiner="sum")
+
+    init = tf.global_variables_initializer()
+    sess = tf.Session()
+    sess.run(init)
+
+    b2 = sess.run(b)
+    print(b2.shape)
+    '''
+    原本的spIds的shape为（2,2,2),在embedding_lookup_spare()函数中会被自动变换shape成(2,4),然或通过该ids调用embedding_lookup函数，
+    所以最后的结果为shape为(2,4)与(5,4)的tensor作为ids和params参数的结果，得到结果维度为(2,4,4),然后在第1维度进行一些reduce操作得到
+    最后的结果维度为(2,4)
+    '''
+    m = sess.run(tf.sparse_tensor_to_dense(spIds))
+    print(m.shape)
+    print(sess.run(spIds.values))
+
+
 if __name__ == "__main__":
-    test_lookup_sparse()
+    # test_lookup_sparse_list()
+    # stimulate_matmul_by_lookup_sparse()
+    # stimulate_matmul_by_lookup_sparse()
+    test_embedding_lookup_sparse_spids()
