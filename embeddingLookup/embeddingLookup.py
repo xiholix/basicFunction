@@ -89,7 +89,7 @@ def test_lookup_sparse():
     b = tf.Variable(b, dtype=tf.float32)
     c = tf.Variable(c, dtype=tf.float32)
 
-    idx = tf.SparseTensor(indices=[[0,0], [0,2], [1,0], [1, 1]], values=[1,2,2,0], dense_shape=(2,3))
+    idx = tf.SparseTensor(indices=[[0,0], [0,2], [1,0], [1, 1]], values=[1,2,3,0], dense_shape=(2,3))
     result = tf.nn.embedding_lookup_sparse((a,c,b), idx, None, combiner="sum")
 
     init = tf.global_variables_initializer()
@@ -223,4 +223,5 @@ if __name__ == "__main__":
     # test_lookup_sparse_list()
     # stimulate_matmul_by_lookup_sparse()
     # stimulate_matmul_by_lookup_sparse()
-    test_embedding_lookup_sparse_spids()
+    # test_embedding_lookup_sparse_spids()
+    test_lookup_sparse()
