@@ -90,7 +90,7 @@ def test_lookup_sparse():
     c = tf.Variable(c, dtype=tf.float32)
 
     idx = tf.SparseTensor(indices=[[0,0], [0,2], [1,0], [1, 1]], values=[1,2,3,0], dense_shape=(2,3))
-    result = tf.nn.embedding_lookup_sparse((a,c,b), idx, None, combiner="sum")
+    result = tf.nn.embedding_lookup_sparse([a,c,b], idx, None, combiner="sum")
 
     init = tf.global_variables_initializer()
     sess = tf.Session()
