@@ -147,6 +147,22 @@ def test_batchvm():
     result = sess.run(r)
     print(result)
 
+
+def test_matrix_slice_multi_vector():
+    X = tf.placeholder(tf.float32, shape=(None, None, None, 100))
+    W = tf.Variable(tf.truncated_normal([100, 50], stddev=0.1))
+    X_ = tf.reshape(X, [-1, 100])
+    Y_ = tf.matmul(X_, W)
+    X_shape = tf.gather(tf.shape(X), [0, 1, 2])  # Extract the first three dimensions
+    target_shape = tf.concat(0, [X_shape, [50]])
+    Y = tf.reshape(Y_, target_shape)
+    Y_avg = tf.reduce_mean(Y, 2)
+    '''
+    通过reshape的方法，将要操作的乘法变换为矩阵乘法
+    方法的来源是：http://stackoverflow.com/questions/38051143/no-broadcasting-for-tf-matmul-in-tensorflow/38056381
+    '''
+
+
 if __name__ == "__main__":
     # test_multiply()
     # test_batch_matrix_vector()
