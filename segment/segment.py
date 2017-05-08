@@ -46,7 +46,7 @@ def test_segment_sum():
     '''
     segment ids are not increasing, 如果ids不是增序就用unsorted_segment_sum
     '''
-    b = np.array([0,0,1,1])
+    b = np.array([0,0,2,2])
 
     result = tf.segment_sum(a, b)
 
@@ -62,7 +62,7 @@ def test_unsorted_segment_sum():
     b = np.array([0,1,0,1])
 
     result = tf.unsorted_segment_sum(a, b, 4)
-    #好像后面的第三个参数并没有什么作用
+    # 没有出现的id为对应值为0
 
     init = tf.global_variables_initializer()
     sess = tf.Session()
@@ -72,4 +72,5 @@ def test_unsorted_segment_sum():
     print(r)
 
 if __name__ == "__main__":
+    # test_unsorted_segment_sum()
     test_segment_sum()
